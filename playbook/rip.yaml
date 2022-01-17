@@ -1,0 +1,35 @@
+---
+  - name: Configure RIP
+    hosts: routers
+    gather_facts: false
+    connection: local
+    vars:
+      cli:
+        username: cisco
+        password: cisco123!
+
+    tasks:
+      - name: Configure RIP on R1
+        when: ansible_host == "20.0.0.2"
+        ios_config:
+          provider: "{{ cli }}"
+          parents: router rip
+          lines:
+            - network 20.0.0.0
+
+      - name: "Get RIP configuration and store to rip_brief variable"
+        ios_command:
+          commands: "show running-config | section router rip"
+        register: rip_brief
+    
+      - name: "Copy output to show_rip directory"
+        copy:
+          content: "{{  rip_brief.stdout[0] }}\n"
+          dest: "IPs/show_rip{{inventory_hostname}}.txt"
+      
+      - name: save config
+        ios_config:
+          provider: "{{ cli }}"
+          lines:
+            - do write
+            

@@ -1,0 +1,35 @@
+---
+  - name: Configure OSPF
+    hosts: routers
+    gather_facts: false
+    connection: local
+    vars:
+      cli:
+        username: cisco
+        password: cisco123!
+
+    tasks:
+      - name: Configure OSPF on R2
+        when: ansible_host == "30.0.0.2"
+        ios_config:
+          provider: "{{ cli }}"
+          parents: router ospf 100
+          lines:
+            - network 30.0.0.0 0.255.255.255 area 0
+
+      - name: "Get OSPF configuration and store to ospf_brief variable"
+        ios_command:
+          commands: "show running-config | section router ospf"
+        register: ospf_brief
+    
+      - name: "Copy output to ospf_config directory"
+        copy:
+          content: "{{  ospf_brief.stdout[0] }}\n"
+          dest: "IPs/show_ospf{{inventory_hostname}}.txt"
+      
+      - name: save config
+        ios_config:
+          provider: "{{ cli }}"
+          lines:
+            - do write
+            

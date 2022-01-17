@@ -1,0 +1,5 @@
+router ospf 100
+ log-adjacency-changes
+ redistribute eigrp 100 subnets
+ redistribute rip subnets
+ network 30.0.0.0 0.255.255.255 area 0

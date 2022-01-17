@@ -1,0 +1,35 @@
+---
+  - name: Configure EIGRP
+    hosts: routers
+    gather_facts: false
+    connection: local
+    vars:
+      cli:
+        username: cisco
+        password: cisco123!
+
+    tasks:
+      - name: Configure EIGRP on R0
+        when: ansible_host == "10.0.0.2"
+        ios_config:
+          provider: "{{ cli }}"
+          parents: router eigrp 100
+          lines:
+            - network 10.0.0.0
+
+      - name: "Get EIGRP configuration and store to eigrp_brief variable"
+        ios_command:
+          commands: "show running-config | section router eigrp"
+        register: eigrp_brief
+    
+      - name: "Copy output to show_eigrp directory"
+        copy:
+          content: "{{  eigrp_brief.stdout[0] }}\n"
+          dest: "IPs/show_eigrp{{inventory_hostname}}.txt"
+      
+      - name: save config
+        ios_config:
+          provider: "{{ cli }}"
+          lines:
+            - do write
+            
